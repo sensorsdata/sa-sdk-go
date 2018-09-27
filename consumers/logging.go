@@ -92,7 +92,7 @@ func (w *LogWriter) intRotate() error {
 		hour := now.Hour()
 		w.hour = hour
 
-		fname = fmt.Sprintf("%s.%s.%d", w.fname, today, hour)
+		fname = fmt.Sprintf("%s.%s.%02d", w.fname, today, hour)
 	} else {
 		fname = fmt.Sprintf("%s.%s", w.fname, today)
 	}
