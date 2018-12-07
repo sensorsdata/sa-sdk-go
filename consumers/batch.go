@@ -39,6 +39,9 @@ func (c *BatchConsumer) Send(data structs.EventData) error {
 }
 
 func (c *BatchConsumer) Flush() error {
+	if len(c.buffer) == 0 {
+		return nil
+	}
 	jdata, err := json.Marshal(c.buffer)
 	if err != nil {
 		return err
