@@ -1,14 +1,15 @@
 package utils
+
 import (
-	"os"
-	"fmt"
-	"time"
 	"bytes"
-	"errors"
-	"net/url"
-	"net/http"
 	"compress/gzip"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 func DoRequest(url, args string, to time.Duration) error {
@@ -16,21 +17,24 @@ func DoRequest(url, args string, to time.Duration) error {
 
 	data := bytes.NewBufferString(args)
 
-	req, _ := http.NewRequest("POST", url , data)
+	req, _ := http.NewRequest("POST", url, data)
 
 	client := &http.Client{Timeout: to}
 	resp, err := client.Do(req)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Request failed to url: %s\n", url)
 		return err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Fprintf(os.Stderr, "Http status is %d\n", resp.StatusCode)
-		return errors.New("Bad http status")
+		body, _ := ioutil.ReadAll(resp.Body)
+		data, _ := json.Marshal(struct {
+			StatusCode int
+			Body       string
+		}{resp.StatusCode, string(body)})
+		return errors.New(string(data))
 	}
 	return nil
 }

@@ -1,8 +1,8 @@
 package consumers
 
 import (
-	"time"
 	"encoding/json"
+	"time"
 
 	"github.com/sensorsdata/sa-sdk-go/structs"
 )
@@ -10,7 +10,6 @@ import (
 const (
 	BATCH_DEFAULT_MAX = 50
 )
-
 
 type BatchConsumer struct {
 	Url     string
@@ -47,11 +46,11 @@ func (c *BatchConsumer) Flush() error {
 		return err
 	}
 
-	send(c.Url, string(jdata), c.Timeout, true)
+	err = send(c.Url, string(jdata), c.Timeout, true)
 
 	c.buffer = c.buffer[:0]
 
-	return nil
+	return err
 }
 
 func (c *BatchConsumer) Close() error {

@@ -1,13 +1,14 @@
 package sensorsanalytics
+
 import (
-	"os"
-	"fmt"
 	"errors"
+	"fmt"
+	"os"
 	"runtime"
 
-	"github.com/sensorsdata/sa-sdk-go/utils"
-	"github.com/sensorsdata/sa-sdk-go/structs"
 	"github.com/sensorsdata/sa-sdk-go/consumers"
+	"github.com/sensorsdata/sa-sdk-go/structs"
+	"github.com/sensorsdata/sa-sdk-go/utils"
 )
 
 const (
@@ -20,10 +21,10 @@ const (
 	PROFILE_UNSET     = "profile_unset"
 	PROFILE_DELETE    = "profile_delete"
 
-	SDK_VERSION       = "1.7.5"
-	LIB_NAME          = "Golang"
+	SDK_VERSION = "2.0.0"
+	LIB_NAME    = "Golang"
 
-	MAX_ID_LEN        = 255
+	MAX_ID_LEN = 255
 )
 
 type SensorsAnalytics struct {
@@ -42,12 +43,12 @@ func (sa *SensorsAnalytics) track(etype, event, distinctId, originId string, pro
 		eventTime = et
 	}
 
-	data :=	structs.EventData{
-		Type          : etype,
-		Time          : eventTime,
-		DistinctId    : distinctId,
-		Properties    : properties,
-		LibProperties : getLibProperties(),
+	data := structs.EventData{
+		Type:          etype,
+		Time:          eventTime,
+		DistinctId:    distinctId,
+		Properties:    properties,
+		LibProperties: getLibProperties(),
 	}
 
 	if sa.ProjectName != "" {
@@ -202,8 +203,8 @@ func extractUserTime(p map[string]interface{}) int64 {
 	if t, ok := p["$time"]; ok {
 		v, ok := t.(int64)
 		if !ok {
-		    fmt.Fprintln(os.Stderr, "It's not ok for type string")
-		    return 0
+			fmt.Fprintln(os.Stderr, "It's not ok for type string")
+			return 0
 		}
 		delete(p, "$time")
 
