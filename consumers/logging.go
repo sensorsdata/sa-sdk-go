@@ -1,11 +1,11 @@
 package consumers
 
 import (
-	"os"
-	"fmt"
-	"time"
-	"sync"
 	"encoding/json"
+	"fmt"
+	"os"
+	"sync"
+	"time"
 
 	"github.com/sensorsdata/sa-sdk-go/structs"
 )
@@ -15,9 +15,9 @@ const (
 )
 
 type LoggingConsumer struct {
-	w       *LogWriter
-	Fname   string
-	Hour    bool
+	w     *LogWriter
+	Fname string
+	Hour  bool
 }
 
 func InitLoggingConsumer(fname string, hour bool) (*LoggingConsumer, error) {
@@ -44,18 +44,22 @@ func (c *LoggingConsumer) Close() error {
 	return nil
 }
 
+func (c *LoggingConsumer) ItemSend(item structs.Item) error {
+	return c.w.writeItem(item)
+}
+
 type LogWriter struct {
-	rec        chan string
+	rec chan string
 
-	fname      string
-	file       *os.File
+	fname string
+	file  *os.File
 
-	day        int
-	hour       int
+	day  int
+	hour int
 
 	hourRotate bool
 
-	wg         sync.WaitGroup
+	wg sync.WaitGroup
 }
 
 func (w *LogWriter) Write(data structs.EventData) error {
@@ -65,6 +69,16 @@ func (w *LogWriter) Write(data structs.EventData) error {
 	}
 
 	w.rec <- string(bdata)
+	return nil
+}
+
+func (w *LogWriter) writeItem(item structs.Item) error {
+	itemData, err := json.Marshal(item)
+	if err != nil {
+		return nil
+	}
+
+	w.rec <- string(itemData)
 	return nil
 }
 
@@ -97,7 +111,7 @@ func (w *LogWriter) intRotate() error {
 		fname = fmt.Sprintf("%s.%s", w.fname, today)
 	}
 
-	fd, err := os.OpenFile(fname, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0644)
+	fd, err := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Printf("open failed: %s\n", err)
 		return err
@@ -109,11 +123,11 @@ func (w *LogWriter) intRotate() error {
 
 func InitLogWriter(fname string, hourRotate bool) (*LogWriter, error) {
 	w := &LogWriter{
-		fname      : fname,
-		day        : time.Now().Day(),
-		hour       : time.Now().Hour(),
-		hourRotate : hourRotate,
-		rec        : make(chan string, CHANNEL_SIZE),
+		fname:      fname,
+		day:        time.Now().Day(),
+		hour:       time.Now().Hour(),
+		hourRotate: hourRotate,
+		rec:        make(chan string, CHANNEL_SIZE),
 	}
 
 	if err := w.intRotate(); err != nil {

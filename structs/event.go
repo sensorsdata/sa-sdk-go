@@ -1,17 +1,17 @@
 package structs
 
 import (
-	"time"
 	"errors"
 	"regexp"
+	"time"
 )
 
 const (
-	KEY_MAX = 256
+	KEY_MAX   = 256
 	VALUE_MAX = 8192
 
 	NAME_PATTERN_BAD = "^(^distinct_id$|^original_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$)$"
-	NAME_PATTERN_OK = "^[a-zA-Z_$][a-zA-Z\\d_$]{0,99}$"
+	NAME_PATTERN_OK  = "^[a-zA-Z_$][a-zA-Z\\d_$]{0,99}$"
 )
 
 var patternBad, patternOk *regexp.Regexp
@@ -30,13 +30,13 @@ type EventData struct {
 
 func init() {
 	patternBad, _ = regexp.Compile(NAME_PATTERN_BAD)
-	patternOk, _  = regexp.Compile(NAME_PATTERN_OK)
+	patternOk, _ = regexp.Compile(NAME_PATTERN_OK)
 }
 
 func (e *EventData) NormalizeData() error {
 	//check distinct id
 	if e.DistinctId == "" || len(e.DistinctId) == 0 {
-		return errors.New("property [original_id] must not be empty")
+		return errors.New("property [original_id] can't be empty")
 	}
 
 	if len(e.DistinctId) > 255 {
@@ -73,19 +73,19 @@ func (e *EventData) NormalizeData() error {
 
 			//check value
 			switch v.(type) {
-				case int:
-				case bool:
-				case float64:
-				case string:
-					if len(v.(string)) > VALUE_MAX {
-						return errors.New("the max length of property key is 8192")
-					}
-				case []string: //value in properties list MUST be string
-				case time.Time: //only support time.Time
-					e.Properties[k] = v.(time.Time).Format("2006-01-02 15:04:05.999")
+			case int:
+			case bool:
+			case float64:
+			case string:
+				if len(v.(string)) > VALUE_MAX {
+					return errors.New("the max length of property key is 8192")
+				}
+			case []string: //value in properties list MUST be string
+			case time.Time: //only support time.Time
+				e.Properties[k] = v.(time.Time).Format("2006-01-02 15:04:05.999")
 
-				default:
-					return errors.New("property value must be a string/int/float64/bool/time.Time/[]string")
+			default:
+				return errors.New("property value must be a string/int/float64/bool/time.Time/[]string")
 			}
 		}
 	}

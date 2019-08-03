@@ -1,18 +1,18 @@
 package consumers
 
 import (
-	"os"
-	"fmt"
-	"time"
 	"bytes"
-	"errors"
-	"net/url"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"os"
+	"time"
 
-	"github.com/sensorsdata/sa-sdk-go/utils"
 	"github.com/sensorsdata/sa-sdk-go/structs"
+	"github.com/sensorsdata/sa-sdk-go/utils"
 )
 
 type DebugConsumer struct {
@@ -75,7 +75,7 @@ func doRequestDebug(url, args string, to time.Duration, writeData bool) (string,
 
 	data := bytes.NewBufferString(args)
 
-	req, _ := http.NewRequest("POST", url , data)
+	req, _ := http.NewRequest("POST", url, data)
 
 	if !writeData {
 		req.Header.Add("Dry-Run", "true")
@@ -114,6 +114,15 @@ func (c *DebugConsumer) Send(data structs.EventData) error {
 	return c.send(c.Url, string(jdata), c.Timeout, false)
 }
 
+func (c *DebugConsumer) ItemSend(item structs.Item) error {
+	itemData, err := json.Marshal(item)
+	if err != nil {
+		return err
+	}
+
+	return c.send(c.Url, string(itemData), c.Timeout, false)
+}
+
 func (c *DebugConsumer) Flush() error {
 	return nil
 }
@@ -121,4 +130,3 @@ func (c *DebugConsumer) Flush() error {
 func (c *DebugConsumer) Close() error {
 	return nil
 }
-

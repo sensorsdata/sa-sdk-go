@@ -20,8 +20,10 @@ const (
 	PROFILE_APPEND    = "profile_append"
 	PROFILE_UNSET     = "profile_unset"
 	PROFILE_DELETE    = "profile_delete"
+	ITEM_SET          = "item_set"
+	ITEM_DELETE       = "item_delete"
 
-	SDK_VERSION = "2.0.0"
+	SDK_VERSION = "2.0.1"
 	LIB_NAME    = "Golang"
 
 	MAX_ID_LEN = 255
@@ -184,6 +186,51 @@ func (sa *SensorsAnalytics) ProfileDelete(distinctId string, isLoginId bool) err
 	nproperties := make(map[string]interface{})
 
 	return sa.track(PROFILE_DELETE, "", distinctId, "", nproperties, isLoginId)
+}
+
+func (sa *SensorsAnalytics) ItemSet(itemType string, itemId string, properties map[string]interface{}) error {
+	libProperties := getLibProperties()
+	time := utils.NowMs()
+	if properties == nil {
+		properties = map[string]interface{}{}
+	}
+
+	itemData := structs.Item{
+		Type:          ITEM_SET,
+		ItemId:        itemId,
+		Time:          time,
+		ItemType:      itemType,
+		Properties:    properties,
+		LibProperties: libProperties,
+	}
+
+	err := itemData.NormalizeItem()
+	if err != nil {
+		return err
+	}
+
+	return sa.C.ItemSend(itemData)
+}
+
+func (sa *SensorsAnalytics) ItemDelete(itemType string, itemId string) error {
+	libProperties := getLibProperties()
+	time := utils.NowMs()
+
+	itemData := structs.Item{
+		Type:          ITEM_DELETE,
+		ItemId:        itemId,
+		Time:          time,
+		ItemType:      itemType,
+		Properties:    map[string]interface{}{},
+		LibProperties: libProperties,
+	}
+
+	err := itemData.NormalizeItem()
+	if err != nil {
+		return err
+	}
+
+	return sa.C.ItemSend(itemData)
 }
 
 func getLibProperties() structs.LibProperties {

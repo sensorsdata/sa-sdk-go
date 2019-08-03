@@ -12,10 +12,11 @@ const (
 )
 
 type BatchConsumer struct {
-	Url     string
-	Max     int
-	buffer  []structs.EventData
-	Timeout time.Duration
+	Url        string
+	Max        int
+	DataBuffer []structs.EventData
+	ItemBuffer []structs.Item
+	Timeout    time.Duration
 }
 
 func InitBatchConsumer(url string, max, timeout int) (*BatchConsumer, error) {
@@ -24,35 +25,58 @@ func InitBatchConsumer(url string, max, timeout int) (*BatchConsumer, error) {
 	}
 
 	c := &BatchConsumer{Url: url, Max: max, Timeout: time.Duration(timeout) * time.Millisecond}
-	c.buffer = make([]structs.EventData, 0, max)
+	c.DataBuffer = make([]structs.EventData, 0, max)
 
 	return c, nil
 }
 
 func (c *BatchConsumer) Send(data structs.EventData) error {
-	c.buffer = append(c.buffer, data)
-	if len(c.buffer) >= c.Max {
-		return c.Flush()
+	c.DataBuffer = append(c.DataBuffer, data)
+	if (len(c.DataBuffer) + len(c.ItemBuffer)) < c.Max {
+		return nil
+	}
+
+	return c.Flush()
+}
+
+func (c *BatchConsumer) Flush() error {
+	// 刷新 Event 数据
+	if len(c.DataBuffer) != 0 {
+		jdata, err := json.Marshal(c.DataBuffer)
+		if err != nil {
+			return err
+		}
+
+		err = send(c.Url, string(jdata), c.Timeout, true)
+
+		c.DataBuffer = c.DataBuffer[:0]
+		return err
+	}
+
+	// 刷新 Item 数据
+	if len(c.ItemBuffer) != 0 {
+		itemData, err := json.Marshal(c.ItemBuffer)
+		if err != nil {
+			return err
+		}
+
+		err = send(c.Url, string(itemData), c.Timeout, true)
+
+		c.ItemBuffer = c.ItemBuffer[:0]
+		return err
 	}
 	return nil
 }
 
-func (c *BatchConsumer) Flush() error {
-	if len(c.buffer) == 0 {
-		return nil
-	}
-	jdata, err := json.Marshal(c.buffer)
-	if err != nil {
-		return err
-	}
-
-	err = send(c.Url, string(jdata), c.Timeout, true)
-
-	c.buffer = c.buffer[:0]
-
-	return err
+func (c *BatchConsumer) Close() error {
+	return c.Flush()
 }
 
-func (c *BatchConsumer) Close() error {
+func (c *BatchConsumer) ItemSend(item structs.Item) error {
+	c.ItemBuffer = append(c.ItemBuffer, item)
+	if (len(c.DataBuffer) + len(c.ItemBuffer)) < c.Max {
+		return nil
+	}
+
 	return c.Flush()
 }

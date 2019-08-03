@@ -1,20 +1,20 @@
 package consumers
 
 import (
-	"os"
+	"encoding/json"
 	"fmt"
-	"time"
+	"os"
 	"sync"
 	"syscall"
-	"encoding/json"
+	"time"
 
 	"github.com/sensorsdata/sa-sdk-go/structs"
 )
 
 type ConcurrentLoggingConsumer struct {
-	w       *ConcurrentLogWriter
-	Fname   string
-	Hour    bool
+	w     *ConcurrentLogWriter
+	Fname string
+	Hour  bool
 }
 
 func InitConcurrentLoggingConsumer(fname string, hour bool) (*ConcurrentLoggingConsumer, error) {
@@ -41,18 +41,22 @@ func (c *ConcurrentLoggingConsumer) Close() error {
 	return nil
 }
 
+func (c *ConcurrentLoggingConsumer) ItemSend(item structs.Item) error {
+	return c.w.writeItem(item)
+}
+
 type ConcurrentLogWriter struct {
-	rec        chan string
+	rec chan string
 
-	fname      string
-	file       *os.File
+	fname string
+	file  *os.File
 
-	day        int
-	hour       int
+	day  int
+	hour int
 
 	hourRotate bool
 
-	wg         sync.WaitGroup
+	wg sync.WaitGroup
 }
 
 func (w *ConcurrentLogWriter) Write(data structs.EventData) error {
@@ -62,6 +66,16 @@ func (w *ConcurrentLogWriter) Write(data structs.EventData) error {
 	}
 
 	w.rec <- string(bdata)
+	return nil
+}
+
+func (w *ConcurrentLogWriter) writeItem(item structs.Item) error {
+	itemData, err := json.Marshal(item)
+	if err != nil {
+		return nil
+	}
+
+	w.rec <- string(itemData)
 	return nil
 }
 
@@ -94,7 +108,7 @@ func (w *ConcurrentLogWriter) intRotate() error {
 		fname = fmt.Sprintf("%s.%s", w.fname, today)
 	}
 
-	fd, err := os.OpenFile(fname, os.O_WRONLY | os.O_APPEND | os.O_CREATE, 0644)
+	fd, err := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Printf("open failed: %s\n", err)
 		return err
@@ -106,11 +120,11 @@ func (w *ConcurrentLogWriter) intRotate() error {
 
 func InitConcurrentLogWriter(fname string, hourRotate bool) (*ConcurrentLogWriter, error) {
 	w := &ConcurrentLogWriter{
-		fname      : fname,
-		day        : time.Now().Day(),
-		hour       : time.Now().Hour(),
-		hourRotate : hourRotate,
-		rec        : make(chan string, CHANNEL_SIZE),
+		fname:      fname,
+		day:        time.Now().Day(),
+		hour:       time.Now().Hour(),
+		hourRotate: hourRotate,
+		rec:        make(chan string, CHANNEL_SIZE),
 	}
 
 	if err := w.intRotate(); err != nil {
