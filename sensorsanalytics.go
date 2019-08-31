@@ -23,7 +23,7 @@ const (
 	ITEM_SET          = "item_set"
 	ITEM_DELETE       = "item_delete"
 
-	SDK_VERSION = "2.0.1"
+	SDK_VERSION = "2.0.2"
 	LIB_NAME    = "Golang"
 
 	MAX_ID_LEN = 255
@@ -94,7 +94,7 @@ func (sa *SensorsAnalytics) Track(distinctId, event string, properties map[strin
 
 	// merge properties
 	if properties == nil {
-		properties = make(map[string]interface{})
+		nproperties = make(map[string]interface{})
 	} else {
 		nproperties = utils.DeepCopy(properties)
 	}
