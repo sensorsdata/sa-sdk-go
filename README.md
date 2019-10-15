@@ -18,25 +18,42 @@ Or update sdk with
 Once the SDK is successfully installed, use the Sensors Analytics SDK likes:
 
 ```golang
-    import sdk "github.com/sensorsdata/sa-sdk-go"
+package main
 
-    // Gets the url of Sensors Analytics in the home page.
-    SA_SERVER_URL = 'YOUR_SERVER_URL'
+import (
+	sdk "github.com/sensorsdata/sa-sdk-go"
+	"log"
+)
 
-    // Initialized the Sensors Analytics SDK with Default Consumer
-    consumer = sdk.InitDefaultConsumer(SA_SERVER_URL)
-    sa = sdk.InitSensorsAnalytics(consumer)
+// Gets the url of Sensors Analytics in the home page.
+const (
+	SA_SERVER_URL = "YOUR_SERVER_URL"
 
-    properties := map[string]interface{}{
-         "price": 12,
-         "name": "apple",
-         "somedata": []string{"a", "b"},
-    }
+	TIMEOUT = 2000 // milliseconds
+)
 
-    // Track the event 'ServerStart'
-    sa.track("ABCDEFG1234567", "ServerStart", properties, false)
+func main() {
+	// Initialized the Sensors Analytics SDK with Default Consumer
+	consumer, err := sdk.InitDefaultConsumer(SA_SERVER_URL, TIMEOUT)
+	if err != nil {
+		log.Fatal("init error", err)
+	}
+	sa := sdk.InitSensorsAnalytics(consumer, "", false)
 
-    sa.Close()
+	properties := map[string]interface{}{
+		"price":    12,
+		"name":     "apple",
+		"somedata": []string{"a", "b"},
+	}
+
+	// Track the event 'ServerStart'
+	err = sa.Track("ABCDEFG1234567", "ServerStart", properties, false)
+	if err != nil {
+		log.Print("track error", err)
+	}
+
+	sa.Close()
+}
 ```
 
 ## More Examples
