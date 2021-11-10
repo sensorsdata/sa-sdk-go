@@ -83,6 +83,10 @@ func (e *EventData) NormalizeData() error {
 			if len(k) > KEY_MAX {
 				return errors.New("the max length of property key is 256")
 			}
+
+			if len(k) == 0 {
+				return errors.New("The key is empty or null.")
+			}
 			isMatch := checkPattern([]byte(k))
 			if !isMatch {
 				return errors.New("property key must be a valid variable name.")

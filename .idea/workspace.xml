@@ -88,8 +88,8 @@
       <module name="sa-sdk-go" />
       <working_directory value="$PROJECT_DIR$/" />
       <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/_examples/example_batch.go" />
       <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/_examples/example_batch.go" />
       <method v="2" />
     </configuration>
     <recent_temporary>

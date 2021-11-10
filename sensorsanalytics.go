@@ -40,11 +40,14 @@ const (
 	ITEM_SET          = "item_set"
 	ITEM_DELETE       = "item_delete"
 
-	SDK_VERSION = "2.0.3"
+	SDK_VERSION = "2.0.4"
 	LIB_NAME    = "Golang"
 
 	MAX_ID_LEN = 255
 )
+
+// 静态公共属性
+var superProperties map[string]interface{}
 
 type SensorsAnalytics struct {
 	C           consumers.Consumer
@@ -116,6 +119,10 @@ func (sa *SensorsAnalytics) Track(distinctId, event string, properties map[strin
 		nproperties = utils.DeepCopy(properties)
 	}
 
+	// merge super properties
+	if superProperties != nil {
+		utils.MergeSuperProperty(superProperties, nproperties)
+	}
 	nproperties["$lib"] = LIB_NAME
 	nproperties["$lib_version"] = SDK_VERSION
 
@@ -132,7 +139,10 @@ func (sa *SensorsAnalytics) TrackSignup(distinctId, originId string) error {
 	}
 
 	properties := make(map[string]interface{})
-
+	// merge super properties
+	if superProperties != nil {
+		utils.MergeSuperProperty(superProperties, properties)
+	}
 	properties["$lib"] = LIB_NAME
 	properties["$lib_version"] = SDK_VERSION
 
@@ -248,6 +258,24 @@ func (sa *SensorsAnalytics) ItemDelete(itemType string, itemId string) error {
 	}
 
 	return sa.C.ItemSend(itemData)
+}
+
+// 注册公共属性
+func (sa *SensorsAnalytics) RegisterSuperProperties(superProperty map[string]interface{}) {
+	if superProperties == nil {
+		superProperties = make(map[string]interface{})
+	}
+	utils.MergeSuperProperty(superProperty, superProperties)
+}
+
+// 清除公共属性
+func (sa *SensorsAnalytics) ClearSuperProperties() {
+	superProperties = make(map[string]interface{})
+}
+
+// 清除指定 key 的公共属性
+func (sa *SensorsAnalytics) UnregisterSuperProperty(key string) {
+	delete(superProperties, key)
 }
 
 func getLibProperties() structs.LibProperties {

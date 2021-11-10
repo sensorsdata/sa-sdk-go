@@ -114,6 +114,21 @@ func NowMs() int64 {
 	return time.Now().UnixNano() / 1000000
 }
 
+// 合并公共属性
+func MergeSuperProperty(superProperty map[string]interface{}, properties map[string]interface{}) map[string]interface{} {
+	if superProperty == nil {
+		return properties
+	}
+
+	for key, value := range superProperty {
+		_, ok := properties[key]
+		if !ok {
+			properties[key] = value
+		}
+	}
+	return properties
+}
+
 func DeepCopy(value map[string]interface{}) map[string]interface{} {
 	ncopy := deepCopy(value)
 	if nmap, ok := ncopy.(map[string]interface{}); ok {
