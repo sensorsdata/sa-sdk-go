@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	KEY_MAX   = 256
+	KEY_MAX   = 100
 	VALUE_MAX = 8192
 
 	NAME_PATTERN_BAD = "^(^distinct_id$|^original_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$)$"
@@ -64,7 +64,7 @@ func (e *EventData) NormalizeData() error {
 	if e.Event != "" {
 		isMatch := checkPattern([]byte(e.Event))
 		if !isMatch {
-			return errors.New("event name must be a valid variable name.")
+			return errors.New("event name = " + e.Event + " is invalid, event name must be a valid variable name.")
 		}
 	}
 
@@ -72,7 +72,7 @@ func (e *EventData) NormalizeData() error {
 	if e.Project != "" {
 		isMatch := checkPattern([]byte(e.Project))
 		if !isMatch {
-			return errors.New("project name must be a valid variable name.")
+			return errors.New("project = " + e.Project + " is invalid, project name must be a valid variable name.")
 		}
 	}
 
@@ -81,15 +81,15 @@ func (e *EventData) NormalizeData() error {
 		for k, v := range e.Properties {
 			//check key
 			if len(k) > KEY_MAX {
-				return errors.New("the max length of property key is 256")
+				return errors.New("the max length of property key is 100," + "key = " + k)
 			}
 
 			if len(k) == 0 {
-				return errors.New("The key is empty or null.")
+				return errors.New("The key is empty or null," + "key = " + k + ", value = " + v.(string))
 			}
 			isMatch := checkPattern([]byte(k))
 			if !isMatch {
-				return errors.New("property key must be a valid variable name.")
+				return errors.New("property key must be a valid variable name," + "key = " + k)
 			}
 
 			//check value
@@ -99,14 +99,14 @@ func (e *EventData) NormalizeData() error {
 			case float64:
 			case string:
 				if len(v.(string)) > VALUE_MAX {
-					return errors.New("the max length of property key is 8192")
+					return errors.New("the max length of property value is 8192," + "value = " + v.(string))
 				}
 			case []string: //value in properties list MUST be string
 			case time.Time: //only support time.Time
 				e.Properties[k] = v.(time.Time).Format("2006-01-02 15:04:05.999")
 
 			default:
-				return errors.New("property value must be a string/int/float64/bool/time.Time/[]string")
+				return errors.New("property value must be a string/int/float64/bool/time.Time/[]string," + "key = " + k)
 			}
 		}
 	}

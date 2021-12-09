@@ -65,7 +65,7 @@ func (item *Item) NormalizeItem() error {
 		for k, v := range item.Properties {
 			//check key
 			if len(k) > KEY_MAX {
-				return errors.New("the max length of property key is 256")
+				return errors.New("the max length of property key is 100," + "key = " + k)
 			}
 			isMatch := checkPattern([]byte(k))
 			if !isMatch {
@@ -79,14 +79,14 @@ func (item *Item) NormalizeItem() error {
 			case float64:
 			case string:
 				if len(v.(string)) > VALUE_MAX {
-					return errors.New("the max length of property key is 8192")
+					return errors.New("the max length of property value is 8192," + "value = " + v.(string))
 				}
 			case []string: //value in properties list MUST be string
 			case time.Time: //only support time.Time
 				item.Properties[k] = v.(time.Time).Format("2006-01-02 15:04:05.999")
 
 			default:
-				return errors.New("property value must be a string/int/float64/bool/time.Time/[]string")
+				return errors.New("property value must be a string/int/float64/bool/time.Time/[]string," + "key = " + k)
 			}
 		}
 	}
