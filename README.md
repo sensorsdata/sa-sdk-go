@@ -23,30 +23,6 @@ go get -u github.com/sensorsdata/sa-sdk-go
 	
 ```
 
-## 示例
-
-```golang
-import sdk "github.com/sensorsdata/sa-sdk-go"
-
-// Gets the url of Sensors Analytics in the home page.
-SA_SERVER_URL = 'YOUR_SERVER_URL'
-
-// Initialized the Sensors Analytics SDK with Default Consumer
-consumer = sdk.InitDefaultConsumer(SA_SERVER_URL)
-sa = sdk.InitSensorsAnalytics(consumer)
-
-properties := map[string]interface{}{
-     "price": 12,
-     "name": "apple",
-     "somedata": []string{"a", "b"},
-}
-
-// Track the event 'ServerStart'
-sa.track("ABCDEFG1234567", "ServerStart", properties, false)
-
-sa.Close()
-```
-
 **更多示例**
 ([Examples](_examples)) 
 
