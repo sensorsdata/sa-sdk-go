@@ -23,9 +23,6 @@ go get -u github.com/sensorsdata/sa-sdk-go
 	
 ```
 
-**更多示例**
-([Examples](_examples)) 
-
 ## 更多帮助
 可以查看官方帮助文档： [Golang SDK 使用说明](http://www.sensorsdata.cn/manual/golang_sdk.html)<br>
 
