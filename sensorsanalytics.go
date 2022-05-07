@@ -40,7 +40,7 @@ const (
 	ITEM_SET          = "item_set"
 	ITEM_DELETE       = "item_delete"
 
-	SDK_VERSION = "2.0.5"
+	SDK_VERSION = "2.0.6"
 	LIB_NAME    = "Golang"
 
 	MAX_ID_LEN = 255

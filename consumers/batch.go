@@ -19,6 +19,7 @@ package consumers
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/sensorsdata/sa-sdk-go/structs"
@@ -34,6 +35,7 @@ type BatchConsumer struct {
 	DataBuffer []structs.EventData
 	ItemBuffer []structs.Item
 	Timeout    time.Duration
+	lock       sync.Mutex
 }
 
 func InitBatchConsumer(url string, max, timeout int) (*BatchConsumer, error) {
@@ -48,6 +50,8 @@ func InitBatchConsumer(url string, max, timeout int) (*BatchConsumer, error) {
 }
 
 func (c *BatchConsumer) Send(data structs.EventData) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	c.DataBuffer = append(c.DataBuffer, data)
 	if (len(c.DataBuffer) + len(c.ItemBuffer)) < c.Max {
 		return nil
@@ -65,9 +69,10 @@ func (c *BatchConsumer) Flush() error {
 		}
 
 		err = send(c.Url, string(jdata), c.Timeout, true)
-
 		c.DataBuffer = c.DataBuffer[:0]
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	// 刷新 Item 数据
@@ -80,7 +85,9 @@ func (c *BatchConsumer) Flush() error {
 		err = send(c.Url, string(itemData), c.Timeout, true)
 
 		c.ItemBuffer = c.ItemBuffer[:0]
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -90,6 +97,8 @@ func (c *BatchConsumer) Close() error {
 }
 
 func (c *BatchConsumer) ItemSend(item structs.Item) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	c.ItemBuffer = append(c.ItemBuffer, item)
 	if (len(c.DataBuffer) + len(c.ItemBuffer)) < c.Max {
 		return nil
