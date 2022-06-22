@@ -19,6 +19,7 @@ package structs
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 )
@@ -27,7 +28,7 @@ const (
 	KEY_MAX   = 100
 	VALUE_MAX = 8192
 
-	NAME_PATTERN_BAD = "^(^distinct_id$|^original_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$)$"
+	NAME_PATTERN_BAD = "^(^distinct_id$|^original_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$|^user_group.*|^user_tag.*)$"
 	NAME_PATTERN_OK  = "^[a-zA-Z_$][a-zA-Z\\d_$]{0,99}$"
 )
 
@@ -36,13 +37,14 @@ var patternBad, patternOk *regexp.Regexp
 type EventData struct {
 	Type          string                 `json:"type"`
 	Time          int64                  `json:"time"`
-	DistinctId    string                 `json:"distinct_id"`
+	DistinctId    string                 `json:"distinct_id,omitempty"`
 	Properties    map[string]interface{} `json:"properties"`
 	LibProperties LibProperties          `json:"lib"`
 	Project       string                 `json:"project"`
 	Event         string                 `json:"event"`
 	OriginId      string                 `json:"original_id,omitempty"`
 	TimeFree      bool                   `json:"time_free,omitempty"`
+	Identities    map[string]string      `json:"identities,omitempty"`
 }
 
 func init() {
@@ -111,6 +113,27 @@ func (e *EventData) NormalizeData() error {
 		}
 	}
 
+	return nil
+}
+
+func (e *EventData) CheckIdentities() error {
+	if e.Identities == nil || len(e.Identities) < 1 {
+		return errors.New("identity is nil")
+	}
+
+	for k, v := range e.Identities {
+		if len(k) == 0 {
+			return errors.New(fmt.Sprintf("The identity invalid, key is empty or null, value = %v", v))
+		}
+
+		if !checkPattern([]byte(k)) {
+			return errors.New(fmt.Sprintf("The identity invalid, key is preset key, key = %s, value = %v", k, v))
+		}
+
+		if len(v) == 0 || len(v) > 255 {
+			return errors.New(fmt.Sprintf("The identity invalid, value is empty or length greater than 255, key = %s, value = %v", k, v))
+		}
+	}
 	return nil
 }
 

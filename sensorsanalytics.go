@@ -19,12 +19,7 @@ package sensorsanalytics
 
 import (
 	"errors"
-	"fmt"
-	"os"
-	"runtime"
-
 	"github.com/sensorsdata/sa-sdk-go/consumers"
-	"github.com/sensorsdata/sa-sdk-go/structs"
 	"github.com/sensorsdata/sa-sdk-go/utils"
 )
 
@@ -39,11 +34,7 @@ const (
 	PROFILE_DELETE    = "profile_delete"
 	ITEM_SET          = "item_set"
 	ITEM_DELETE       = "item_delete"
-
-	SDK_VERSION = "2.0.6"
-	LIB_NAME    = "Golang"
-
-	MAX_ID_LEN = 255
+	MAX_ID_LEN        = 255
 )
 
 // 静态公共属性
@@ -57,48 +48,6 @@ type SensorsAnalytics struct {
 
 func InitSensorsAnalytics(c consumers.Consumer, projectName string, timeFree bool) SensorsAnalytics {
 	return SensorsAnalytics{C: c, ProjectName: projectName, TimeFree: timeFree}
-}
-
-func (sa *SensorsAnalytics) track(etype, event, distinctId, originId string, properties map[string]interface{}, isLoginId bool) error {
-	eventTime := utils.NowMs()
-	if et := extractUserTime(properties); et > 0 {
-		eventTime = et
-	}
-
-	data := structs.EventData{
-		Type:          etype,
-		Time:          eventTime,
-		DistinctId:    distinctId,
-		Properties:    properties,
-		LibProperties: getLibProperties(),
-	}
-
-	if sa.ProjectName != "" {
-		data.Project = sa.ProjectName
-	}
-
-	if etype == TRACK || etype == TRACK_SIGNUP {
-		data.Event = event
-	}
-
-	if etype == TRACK_SIGNUP {
-		data.OriginId = originId
-	}
-
-	if sa.TimeFree {
-		data.TimeFree = true
-	}
-
-	if isLoginId {
-		properties["$is_login_id"] = true
-	}
-
-	err := data.NormalizeData()
-	if err != nil {
-		return err
-	}
-
-	return sa.C.Send(data)
 }
 
 func (sa *SensorsAnalytics) Flush() {
@@ -123,10 +72,7 @@ func (sa *SensorsAnalytics) Track(distinctId, event string, properties map[strin
 	if superProperties != nil {
 		utils.MergeSuperProperty(superProperties, nproperties)
 	}
-	nproperties["$lib"] = LIB_NAME
-	nproperties["$lib_version"] = SDK_VERSION
-
-	return sa.track(TRACK, event, distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, TRACK, event, distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) TrackSignup(distinctId, originId string) error {
@@ -143,10 +89,7 @@ func (sa *SensorsAnalytics) TrackSignup(distinctId, originId string) error {
 	if superProperties != nil {
 		utils.MergeSuperProperty(superProperties, properties)
 	}
-	properties["$lib"] = LIB_NAME
-	properties["$lib_version"] = SDK_VERSION
-
-	return sa.track(TRACK_SIGNUP, "$SignUp", distinctId, originId, properties, false)
+	return TrackEvent(sa, TRACK_SIGNUP, "$SignUp", distinctId, originId, properties, false)
 }
 
 func (sa *SensorsAnalytics) ProfileSet(distinctId string, properties map[string]interface{}, isLoginId bool) error {
@@ -157,8 +100,7 @@ func (sa *SensorsAnalytics) ProfileSet(distinctId string, properties map[string]
 	} else {
 		nproperties = utils.DeepCopy(properties)
 	}
-
-	return sa.track(PROFILE_SET, "", distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, PROFILE_SET, "", distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) ProfileSetOnce(distinctId string, properties map[string]interface{}, isLoginId bool) error {
@@ -169,8 +111,7 @@ func (sa *SensorsAnalytics) ProfileSetOnce(distinctId string, properties map[str
 	} else {
 		nproperties = utils.DeepCopy(properties)
 	}
-
-	return sa.track(PROFILE_SET_ONCE, "", distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, PROFILE_SET_ONCE, "", distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) ProfileIncrement(distinctId string, properties map[string]interface{}, isLoginId bool) error {
@@ -181,8 +122,7 @@ func (sa *SensorsAnalytics) ProfileIncrement(distinctId string, properties map[s
 	} else {
 		nproperties = utils.DeepCopy(properties)
 	}
-
-	return sa.track(PROFILE_INCREMENT, "", distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, PROFILE_INCREMENT, "", distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) ProfileAppend(distinctId string, properties map[string]interface{}, isLoginId bool) error {
@@ -193,8 +133,7 @@ func (sa *SensorsAnalytics) ProfileAppend(distinctId string, properties map[stri
 	} else {
 		nproperties = utils.DeepCopy(properties)
 	}
-
-	return sa.track(PROFILE_APPEND, "", distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, PROFILE_APPEND, "", distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) ProfileUnset(distinctId string, properties map[string]interface{}, isLoginId bool) error {
@@ -205,62 +144,23 @@ func (sa *SensorsAnalytics) ProfileUnset(distinctId string, properties map[strin
 	} else {
 		nproperties = utils.DeepCopy(properties)
 	}
-
-	return sa.track(PROFILE_UNSET, "", distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, PROFILE_UNSET, "", distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) ProfileDelete(distinctId string, isLoginId bool) error {
 	nproperties := make(map[string]interface{})
-
-	return sa.track(PROFILE_DELETE, "", distinctId, "", nproperties, isLoginId)
+	return TrackEvent(sa, PROFILE_DELETE, "", distinctId, "", nproperties, isLoginId)
 }
 
 func (sa *SensorsAnalytics) ItemSet(itemType string, itemId string, properties map[string]interface{}) error {
-	libProperties := getLibProperties()
-	time := utils.NowMs()
-	if properties == nil {
-		properties = map[string]interface{}{}
-	}
-
-	itemData := structs.Item{
-		Type:          ITEM_SET,
-		ItemId:        itemId,
-		Time:          time,
-		ItemType:      itemType,
-		Properties:    properties,
-		LibProperties: libProperties,
-	}
-
-	err := itemData.NormalizeItem()
-	if err != nil {
-		return err
-	}
-
-	return sa.C.ItemSend(itemData)
+	return ItemTrack(sa, ITEM_SET, itemType, itemId, properties)
 }
 
 func (sa *SensorsAnalytics) ItemDelete(itemType string, itemId string) error {
-	libProperties := getLibProperties()
-	time := utils.NowMs()
-
-	itemData := structs.Item{
-		Type:          ITEM_DELETE,
-		ItemId:        itemId,
-		Time:          time,
-		ItemType:      itemType,
-		Properties:    map[string]interface{}{},
-		LibProperties: libProperties,
-	}
-
-	err := itemData.NormalizeItem()
-	if err != nil {
-		return err
-	}
-
-	return sa.C.ItemSend(itemData)
+	return ItemTrack(sa, ITEM_DELETE, itemType, itemId, nil)
 }
 
-// 注册公共属性
+// RegisterSuperProperties 注册公共属性
 func (sa *SensorsAnalytics) RegisterSuperProperties(superProperty map[string]interface{}) {
 	if superProperties == nil {
 		superProperties = make(map[string]interface{})
@@ -268,42 +168,14 @@ func (sa *SensorsAnalytics) RegisterSuperProperties(superProperty map[string]int
 	utils.MergeSuperProperty(superProperty, superProperties)
 }
 
-// 清除公共属性
+// ClearSuperProperties 清除公共属性
 func (sa *SensorsAnalytics) ClearSuperProperties() {
 	superProperties = make(map[string]interface{})
 }
 
-// 清除指定 key 的公共属性
+// UnregisterSuperProperty 清除指定 key 的公共属性
 func (sa *SensorsAnalytics) UnregisterSuperProperty(key string) {
 	delete(superProperties, key)
-}
-
-func getLibProperties() structs.LibProperties {
-	lp := structs.LibProperties{}
-	lp.Lib = LIB_NAME
-	lp.LibVersion = SDK_VERSION
-	lp.LibMethod = "code"
-	if pc, file, line, ok := runtime.Caller(3); ok { //3 means sdk's caller
-		f := runtime.FuncForPC(pc)
-		lp.LibDetail = fmt.Sprintf("##%s##%s##%d", f.Name(), file, line)
-	}
-
-	return lp
-}
-
-func extractUserTime(p map[string]interface{}) int64 {
-	if t, ok := p["$time"]; ok {
-		v, ok := t.(int64)
-		if !ok {
-			fmt.Fprintln(os.Stderr, "It's not ok for type string")
-			return 0
-		}
-		delete(p, "$time")
-
-		return v
-	}
-
-	return 0
 }
 
 func InitDefaultConsumer(url string, timeout int) (*consumers.DefaultConsumer, error) {
