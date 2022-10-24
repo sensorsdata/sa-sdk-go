@@ -21,12 +21,14 @@ import (
 	"fmt"
 	"github.com/sensorsdata/sa-sdk-go/structs"
 	"github.com/sensorsdata/sa-sdk-go/utils"
+	"math/rand"
 	"os"
 	"runtime"
+	"time"
 )
 
 const (
-	SDK_VERSION = "2.1.0"
+	SDK_VERSION = "2.1.1"
 	LIB_NAME    = "Golang"
 )
 
@@ -38,17 +40,19 @@ func TrackEvent(sa *SensorsAnalytics, etype, event, distinctId, originId string,
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
-
+	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
+		TrackID:       rand.Int(),
 		Time:          eventTime,
 		DistinctId:    distinctId,
 		Properties:    properties,
 		LibProperties: getLibProperties(),
 	}
 
-	if sa.ProjectName != "" {
-		data.Project = sa.ProjectName
+	project := getProject(data.Properties, sa.ProjectName)
+	if project != "" {
+		data.Project = project
 	}
 
 	if etype == TRACK || etype == TRACK_SIGNUP {
@@ -78,21 +82,33 @@ func TrackEvent(sa *SensorsAnalytics, etype, event, distinctId, originId string,
 }
 
 func ItemTrack(sa *SensorsAnalytics, trackType string, itemType string, itemId string, properties map[string]interface{}) error {
+	eventTime := utils.NowMs()
+	if et := extractUserTime(properties); et > 0 {
+		eventTime = et
+	}
 	libProperties := getLibProperties()
-	time := utils.NowMs()
+	var nproperties map[string]interface{}
+	// merge properties
 	if properties == nil {
-		properties = map[string]interface{}{}
+		nproperties = make(map[string]interface{})
+	} else {
+		nproperties = utils.DeepCopy(properties)
 	}
 
+	rand.Seed(time.Now().UnixNano())
 	itemData := structs.Item{
 		Type:          trackType,
 		ItemId:        itemId,
-		Time:          time,
+		TrackID:       rand.Int(),
+		Time:          eventTime,
 		ItemType:      itemType,
-		Properties:    properties,
+		Properties:    nproperties,
 		LibProperties: libProperties,
 	}
-
+	project := getProject(itemData.Properties, sa.ProjectName)
+	if project != "" {
+		itemData.Project = project
+	}
 	err := itemData.NormalizeItem()
 	if err != nil {
 		return err
@@ -110,9 +126,10 @@ func TrackEventID3(sa *SensorsAnalytics, identity Identity, etype, event string,
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
-
+	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
+		TrackID:       rand.Int(),
 		Time:          eventTime,
 		Identities:    identity.Identities,
 		Properties:    properties,
@@ -125,16 +142,20 @@ func TrackEventID3(sa *SensorsAnalytics, identity Identity, etype, event string,
 	}
 
 	// 添加 distinct_id
-	distinctId := identity.Identities[LOGIN_ID]
-	if len(distinctId) <= 0 {
-		for _, v := range identity.Identities {
-			distinctId = v
+	var distinctId string
+	idValue := identity.Identities[LOGIN_ID]
+	if len(idValue) <= 0 {
+		for k, v := range identity.Identities {
+			distinctId = k + "+" + v
 		}
+	} else {
+		distinctId = idValue
 	}
 	data.DistinctId = distinctId
 
-	if sa.ProjectName != "" {
-		data.Project = sa.ProjectName
+	project := getProject(data.Properties, sa.ProjectName)
+	if project != "" {
+		data.Project = project
 	}
 
 	if etype == TRACK || etype == BIND || etype == UNBIND {
@@ -181,4 +202,16 @@ func extractUserTime(p map[string]interface{}) int64 {
 	}
 
 	return 0
+}
+
+func getProject(properties map[string]interface{}, defaultProject string) string {
+	if properties != nil && properties["$project"] != nil {
+		project, ok := properties["$project"].(string)
+		delete(properties, "$project")
+		if ok && project != "" {
+			return project
+		}
+	}
+
+	return defaultProject
 }

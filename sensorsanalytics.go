@@ -160,6 +160,10 @@ func (sa *SensorsAnalytics) ItemDelete(itemType string, itemId string) error {
 	return ItemTrack(sa, ITEM_DELETE, itemType, itemId, nil)
 }
 
+func (sa *SensorsAnalytics) ItemDelete3(itemType string, itemId string, properties map[string]interface{}) error {
+	return ItemTrack(sa, ITEM_DELETE, itemType, itemId, properties)
+}
+
 // RegisterSuperProperties 注册公共属性
 func (sa *SensorsAnalytics) RegisterSuperProperties(superProperty map[string]interface{}) {
 	if superProperties == nil {

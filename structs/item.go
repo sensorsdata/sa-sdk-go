@@ -25,9 +25,11 @@ import (
 
 type Item struct {
 	Type          string                 `json:"type"`
+	TrackID       int                    `json:"_track_id"`
 	Time          int64                  `json:"time"`
 	ItemType      string                 `json:"item_type"`
 	ItemId        string                 `json:"item_id"`
+	Project       string                 `json:"project"`
 	Properties    map[string]interface{} `json:"properties"`
 	LibProperties LibProperties          `json:"lib"`
 }
