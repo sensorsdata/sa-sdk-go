@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	SDK_VERSION = "2.1.1"
+	SDK_VERSION = "2.1.2"
 	LIB_NAME    = "Golang"
 )
 
@@ -192,11 +192,11 @@ func getLibProperties() structs.LibProperties {
 func extractUserTime(p map[string]interface{}) int64 {
 	if t, ok := p["$time"]; ok {
 		v, ok := t.(int64)
+		delete(p, "$time")
 		if !ok {
 			fmt.Fprintln(os.Stderr, "It's not ok for type string")
 			return 0
 		}
-		delete(p, "$time")
 
 		return v
 	}
