@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	SDK_VERSION = "2.1.2"
+	SDK_VERSION = "2.1.3"
 	LIB_NAME    = "Golang"
 )
 
@@ -43,7 +43,7 @@ func TrackEvent(sa *SensorsAnalytics, etype, event, distinctId, originId string,
 	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
-		TrackID:       rand.Int(),
+		TrackID:       rand.Int31(),
 		Time:          eventTime,
 		DistinctId:    distinctId,
 		Properties:    properties,
@@ -129,7 +129,7 @@ func TrackEventID3(sa *SensorsAnalytics, identity Identity, etype, event string,
 	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
-		TrackID:       rand.Int(),
+		TrackID:       rand.Int31(),
 		Time:          eventTime,
 		Identities:    identity.Identities,
 		Properties:    properties,

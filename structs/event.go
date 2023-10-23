@@ -36,7 +36,7 @@ var patternBad, patternOk *regexp.Regexp
 
 type EventData struct {
 	Type          string                 `json:"type"`
-	TrackID       int                    `json:"_track_id"`
+	TrackID       int32                  `json:"_track_id"`
 	Time          int64                  `json:"time"`
 	DistinctId    string                 `json:"distinct_id,omitempty"`
 	Properties    map[string]interface{} `json:"properties"`
