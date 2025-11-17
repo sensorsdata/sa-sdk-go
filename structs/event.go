@@ -98,6 +98,8 @@ func (e *EventData) NormalizeData() error {
 			//check value
 			switch v.(type) {
 			case int:
+			case int32:
+			case int64:
 			case bool:
 			case float64:
 			case string:
