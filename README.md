@@ -1,4 +1,5 @@
-![logo](https://opensource.sensorsdata.cn/wp-content/uploads/logo.png)
+<img src="https://ow-file.sensorsdata.cn/www/home/header/sensors_header_icon.svg" width="200" >
+
 ## 神策简介
 
 [**神策数据**](https://www.sensorsdata.cn/)
@@ -26,39 +27,20 @@ go get -u github.com/sensorsdata/sa-sdk-go
 ## 更多帮助
 可以查看官方帮助文档： [Golang SDK 使用说明](http://www.sensorsdata.cn/manual/golang_sdk.html)<br>
 
-## 讨论
+## 神策埋点 SDK 官网
+如需了解神策埋点 SDK 的更多商业授权信息，请访问[神策埋点 SDK 官网](https://jssdk.debugbox.sensorsdata.cn/)获取更多详细信息。
 
-| 扫码加入神策数据开源社区 QQ 群<br>群号：785122381 | 扫码加入神策数据开源社区微信群 |
+## 联系我们
+若您有商业合作或产品集成需求，请通过下面的渠道联系我们获取专业服务与支持。
+
+| 加微信号：skycode008，或扫码添加联系人 <img src="https://github.com/sensorsdata/sa-sdk-android/blob/master/WechatIMG180.jpg" width="300" height="450" /> | 扫码关注「神策埋点 SDK」公众号 ![gzh](https://github.com/sensorsdata/sa-sdk-android/blob/master/gzh.jpeg) |
 | ------ | ------ |
-|![ QQ 讨论群](https://opensource.sensorsdata.cn/wp-content/uploads/ContentCommonPic_1.png) | ![ 微信讨论群 ](https://opensource.sensorsdata.cn/wp-content/uploads/ContentCommonPic_2.png) |
-
-## 公众号
-
-| 扫码关注<br>神策数据开源社区 | 扫码关注<br>神策数据开源社区服务号 |
-| ------ | ------ |
-|![ 微信订阅号 ](https://opensource.sensorsdata.cn/wp-content/uploads/ContentCommonPic_3.png) | ![ 微信服务号 ](https://opensource.sensorsdata.cn/wp-content/uploads/ContentCommonPic_4.png) |
 
 
 ## 新书推荐
 
-| 《数据驱动：从方法到实践》 | 《Android 全埋点解决方案》 | 《iOS 全埋点解决方案》
+| [《数据驱动：从方法到实践》](https://item.jd.com/12322322.html) | [《Android 全埋点解决方案》](https://item.jd.com/12574672.html) | [《iOS 全埋点解决方案》](https://item.jd.com/12867068.html)
 | ------ | ------ | ------ |
-| [![《数据驱动：从方法到实践》](https://opensource.sensorsdata.cn/wp-content/uploads/data_driven_book_1.jpg)](https://item.jd.com/12322322.html) | [![《Android 全埋点解决方案》](https://opensource.sensorsdata.cn/wp-content/uploads/Android-全埋点thumbnail_1.png)](https://item.jd.com/12574672.html) | [![《iOS 全埋点解决方案》](https://opensource.sensorsdata.cn/wp-content/uploads/iOS-全埋点thumbnail_1.png)](https://item.jd.com/12867068.html)
 
 ## License
-
-Copyright 2015－2021 Sensors Data Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-**禁止一切基于神策数据开源 SDK 的所有商业活动！**
+[License 协议](https://github.com/sensorsdata/sa-sdk-go/blob/master/LICENSE.txt)
