@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	SDK_VERSION = "2.1.5"
+	SDK_VERSION = "2.1.6"
 	LIB_NAME    = "Golang"
 )
 

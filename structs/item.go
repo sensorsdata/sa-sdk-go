@@ -19,6 +19,7 @@ package structs
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 )
@@ -76,8 +77,18 @@ func (item *Item) NormalizeItem() error {
 
 			//check value
 			switch v.(type) {
+			case uint:
+			case uint8:
+			case uint16:
+			case uint32:
+			case uint64:
 			case int:
+			case int8:
+			case int16:
+			case int32:
+			case int64:
 			case bool:
+			case float32:
 			case float64:
 			case string:
 				if len(v.(string)) > VALUE_MAX {
@@ -88,7 +99,12 @@ func (item *Item) NormalizeItem() error {
 				item.Properties[k] = v.(time.Time).Format("2006-01-02 15:04:05.999")
 
 			default:
-				return errors.New("property value must be a string/int/float64/bool/time.Time/[]string," + "key = " + k)
+				return errors.New(
+					"property value must be one of " +
+						"[string/int/float/bool/time.Time/[]string], " +
+						"key = " + k +
+						", actual type = " + fmt.Sprintf("%T", v),
+				)
 			}
 		}
 	}
