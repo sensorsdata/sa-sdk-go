@@ -19,8 +19,10 @@ package sensorsanalytics
 
 import (
 	"errors"
+
 	"github.com/sensorsdata/sa-sdk-go/consumers"
 	"github.com/sensorsdata/sa-sdk-go/utils"
+	"github.com/sensorsdata/sa-sdk-go/utils/xrand"
 )
 
 const (
@@ -40,14 +42,26 @@ const (
 // 静态公共属性
 var superProperties map[string]interface{}
 
+type TrackIdGenerator func(etype string, properties map[string]interface{}) int32
+
+var defaultTrackIdGenerator = func(etype string, properties map[string]interface{}) int32 {
+	return xrand.Int32()
+}
+
 type SensorsAnalytics struct {
-	C           consumers.Consumer
-	ProjectName string
-	TimeFree    bool
+	C                consumers.Consumer
+	ProjectName      string
+	TimeFree         bool
+	trackIdGenerator TrackIdGenerator
 }
 
 func InitSensorsAnalytics(c consumers.Consumer, projectName string, timeFree bool) SensorsAnalytics {
-	return SensorsAnalytics{C: c, ProjectName: projectName, TimeFree: timeFree}
+	return SensorsAnalytics{
+		C:                c,
+		ProjectName:      projectName,
+		TimeFree:         timeFree,
+		trackIdGenerator: defaultTrackIdGenerator,
+	}
 }
 
 func (sa *SensorsAnalytics) Flush() {
@@ -56,6 +70,20 @@ func (sa *SensorsAnalytics) Flush() {
 
 func (sa *SensorsAnalytics) Close() {
 	sa.C.Close()
+}
+
+func (sa *SensorsAnalytics) SetTrackIdGenerator(generator TrackIdGenerator) {
+	sa.trackIdGenerator = generator
+}
+
+func (sa *SensorsAnalytics) generateTrackID(etype string, properties map[string]interface{}) int32 {
+	var trackID int32
+	if sa.trackIdGenerator != nil {
+		trackID = sa.trackIdGenerator(etype, properties)
+	} else {
+		trackID = defaultTrackIdGenerator(etype, properties)
+	}
+	return trackID
 }
 
 func (sa *SensorsAnalytics) Track(distinctId, event string, properties map[string]interface{}, isLoginId bool) error {

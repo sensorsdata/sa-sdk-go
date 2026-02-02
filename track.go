@@ -19,12 +19,11 @@ package sensorsanalytics
 
 import (
 	"fmt"
-	"github.com/sensorsdata/sa-sdk-go/structs"
-	"github.com/sensorsdata/sa-sdk-go/utils"
-	"math/rand"
 	"os"
 	"runtime"
-	"time"
+
+	"github.com/sensorsdata/sa-sdk-go/structs"
+	"github.com/sensorsdata/sa-sdk-go/utils"
 )
 
 const (
@@ -40,10 +39,9 @@ func TrackEvent(sa *SensorsAnalytics, etype, event, distinctId, originId string,
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
-	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
-		TrackID:       rand.Int31(),
+		TrackID:       sa.generateTrackID(etype, properties),
 		Time:          eventTime,
 		DistinctId:    distinctId,
 		Properties:    properties,
@@ -95,11 +93,10 @@ func ItemTrack(sa *SensorsAnalytics, trackType string, itemType string, itemId s
 		nproperties = utils.DeepCopy(properties)
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	itemData := structs.Item{
 		Type:          trackType,
 		ItemId:        itemId,
-		TrackID:       rand.Int(),
+		TrackID:       int(sa.generateTrackID(trackType, properties)),
 		Time:          eventTime,
 		ItemType:      itemType,
 		Properties:    nproperties,
@@ -126,10 +123,9 @@ func TrackEventID3(sa *SensorsAnalytics, identity Identity, etype, event string,
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
-	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
-		TrackID:       rand.Int31(),
+		TrackID:       sa.generateTrackID(etype, properties),
 		Time:          eventTime,
 		Identities:    identity.Identities,
 		Properties:    properties,
