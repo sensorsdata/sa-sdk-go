@@ -21,6 +21,7 @@ import (
 	"errors"
 	"github.com/sensorsdata/sa-sdk-go/consumers"
 	"github.com/sensorsdata/sa-sdk-go/utils"
+	"github.com/sensorsdata/sa-sdk-go/utils/xrand"
 )
 
 const (
@@ -40,14 +41,48 @@ const (
 // 静态公共属性
 var superProperties map[string]interface{}
 
-type SensorsAnalytics struct {
-	C           consumers.Consumer
-	ProjectName string
-	TimeFree    bool
+// TrackIdGenerator 定义了生成事件 TrackID 的函数类型。
+// etype: 事件类型；properties: 事件属性；返回值: TrackID
+type TrackIdGenerator func(etype string, properties map[string]interface{}) int32
+
+// defaultTrackIdGenerator 默认的 TrackID 生成器
+var defaultTrackIdGenerator = func(etype string, properties map[string]interface{}) int32 {
+	return xrand.Int32()
 }
 
-func InitSensorsAnalytics(c consumers.Consumer, projectName string, timeFree bool) SensorsAnalytics {
-	return SensorsAnalytics{C: c, ProjectName: projectName, TimeFree: timeFree}
+type SensorsAnalytics struct {
+	C                consumers.Consumer
+	ProjectName      string
+	TimeFree         bool
+	trackIdGenerator TrackIdGenerator // 私有字段，仅通过 Options 设置
+}
+
+// Option 定义 SDK 配置选项的函数类型
+type Option func(*SensorsAnalytics)
+
+// WithTrackIdGenerator 设置自定义的 TrackID 生成器。
+// 必须在 InitSensorsAnalytics 时传入，初始化后不可修改（保证并发安全）。
+func WithTrackIdGenerator(gen TrackIdGenerator) Option {
+	return func(sa *SensorsAnalytics) {
+		if gen != nil {
+			sa.trackIdGenerator = gen
+		}
+	}
+}
+
+func InitSensorsAnalytics(c consumers.Consumer, projectName string, timeFree bool, opts ...Option) SensorsAnalytics {
+	sa := SensorsAnalytics{
+		C:                c,
+		ProjectName:      projectName,
+		TimeFree:         timeFree,
+		trackIdGenerator: defaultTrackIdGenerator,
+	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&sa)
+		}
+	}
+	return sa
 }
 
 func (sa *SensorsAnalytics) Flush() {
@@ -56,6 +91,15 @@ func (sa *SensorsAnalytics) Flush() {
 
 func (sa *SensorsAnalytics) Close() {
 	sa.C.Close()
+}
+
+// generateTrackID 生成 TrackID。
+// 由于 trackIdGenerator 在初始化后只读，此方法天然并发安全。
+func (sa *SensorsAnalytics) generateTrackID(etype string, properties map[string]interface{}) int32 {
+	if sa.trackIdGenerator != nil {
+		return sa.trackIdGenerator(etype, properties)
+	}
+	return defaultTrackIdGenerator(etype, properties)
 }
 
 func (sa *SensorsAnalytics) Track(distinctId, event string, properties map[string]interface{}, isLoginId bool) error {

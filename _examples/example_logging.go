@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 	sdk "github.com/sensorsdata/sa-sdk-go"
+	"math/rand"
 )
 
 func main() {
@@ -28,8 +29,8 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	sa := sdk.InitSensorsAnalytics(c, "default", false)
+	myGen := func(etype string, props map[string]interface{}) int32 { return int32(rand.Int()) }
+	sa := sdk.InitSensorsAnalytics(c, "default", false, sdk.WithTrackIdGenerator(myGen))
 	defer sa.Close()
 
 	distinctId := "ABCDEF123456"

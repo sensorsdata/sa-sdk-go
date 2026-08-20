@@ -26,7 +26,7 @@ import (
 
 type Item struct {
 	Type          string                 `json:"type"`
-	TrackID       int                    `json:"_track_id"`
+	TrackID       int32                  `json:"_track_id"`
 	Time          int64                  `json:"time"`
 	ItemType      string                 `json:"item_type"`
 	ItemId        string                 `json:"item_id"`

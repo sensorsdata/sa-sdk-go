@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	SDK_VERSION = "2.1.6"
+	SDK_VERSION = "2.1.7"
 	LIB_NAME    = "Golang"
 )
 
@@ -40,10 +40,14 @@ func TrackEvent(sa *SensorsAnalytics, etype, event, distinctId, originId string,
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
+	trackID, ok := extractTrackId(properties)
+	if !ok {
+		trackID = sa.generateTrackID(etype, properties)
+	}
 	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
-		TrackID:       rand.Int31(),
+		TrackID:       trackID,
 		Time:          eventTime,
 		DistinctId:    distinctId,
 		Properties:    properties,
@@ -86,6 +90,10 @@ func ItemTrack(sa *SensorsAnalytics, trackType string, itemType string, itemId s
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
+	trackID, ok := extractTrackId(properties)
+	if !ok {
+		trackID = sa.generateTrackID(trackType, properties)
+	}
 	libProperties := getLibProperties()
 	var nproperties map[string]interface{}
 	// merge properties
@@ -99,7 +107,7 @@ func ItemTrack(sa *SensorsAnalytics, trackType string, itemType string, itemId s
 	itemData := structs.Item{
 		Type:          trackType,
 		ItemId:        itemId,
-		TrackID:       rand.Int(),
+		TrackID:       trackID,
 		Time:          eventTime,
 		ItemType:      itemType,
 		Properties:    nproperties,
@@ -126,10 +134,14 @@ func TrackEventID3(sa *SensorsAnalytics, identity Identity, etype, event string,
 	if et := extractUserTime(properties); et > 0 {
 		eventTime = et
 	}
+	trackID, ok := extractTrackId(properties)
+	if !ok {
+		trackID = sa.generateTrackID(etype, properties)
+	}
 	rand.Seed(time.Now().UnixNano())
 	data := structs.EventData{
 		Type:          etype,
-		TrackID:       rand.Int31(),
+		TrackID:       trackID,
 		Time:          eventTime,
 		Identities:    identity.Identities,
 		Properties:    properties,
@@ -203,6 +215,81 @@ func extractUserTime(p map[string]interface{}) int64 {
 
 	return 0
 }
+
+func extractTrackId(p map[string]interface{}) (int32, bool) {
+	if p == nil {
+		return 0, false
+	}
+
+	t, ok := p["$track_id"]
+	if !ok {
+		return 0, false
+	}
+
+	// 无论成功还是失败，只要客户设置了 $track_id，就将其移除
+	delete(p, "$track_id")
+
+	var v int64
+
+	switch tv := t.(type) {
+	case int:
+		v = int64(tv)
+	case int8:
+		v = int64(tv)
+	case int16:
+		v = int64(tv)
+	case int32:
+		v = int64(tv)
+	case int64:
+		v = tv
+	case uint:
+		if uint64(tv) > uint64(maxInt32) {
+			fmt.Fprintf(os.Stderr, "$track_id is out of the int32 range: %v\n", tv)
+			return 0, false
+		}
+		return int32(tv), true
+	case uint8:
+		v = int64(tv)
+	case uint16:
+		v = int64(tv)
+	case uint32:
+		if tv > uint32(maxInt32) {
+			fmt.Fprintf(os.Stderr, "$track_id is out of the int32 range: %v\n", tv)
+			return 0, false
+		}
+		return int32(tv), true
+	case uint64:
+		if tv > uint64(maxInt32) {
+			fmt.Fprintf(os.Stderr, "$track_id is out of the int32 range: %v\n", tv)
+			return 0, false
+		}
+		return int32(tv), true
+	default:
+		fmt.Fprintf(
+			os.Stderr,
+			"Invalid $track_id type, must be integer: type=%T, value=%v\n",
+			t,
+			t,
+		)
+		return 0, false
+	}
+
+	if v > maxInt32 || v < minInt32 {
+		fmt.Fprintf(
+			os.Stderr,
+			"$track_id is out of the int32 range: %v\n",
+			v,
+		)
+		return 0, false
+	}
+
+	return int32(v), true
+}
+
+const (
+	maxInt32 = 2147483647
+	minInt32 = -2147483648
+)
 
 func getProject(properties map[string]interface{}, defaultProject string) string {
 	if properties != nil && properties["$project"] != nil {
